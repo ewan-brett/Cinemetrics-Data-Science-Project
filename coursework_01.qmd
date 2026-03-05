@@ -1,0 +1,285 @@
+---
+title: "Coursework 1: MA22019, Introduction to Data Science"
+author: "Replace With Your Name"
+format: gfm
+---
+
+<!--- DO NOT DELETE THIS LINE --->
+<!--- METADATA ANCHOR: MA22019-CW1-2026 --->
+
+Please read the `coursework_01_instructions.pdf` for the full context, data dictionary, and detailed task requirements before starting.
+
+
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(tidytext)
+library(knitr)
+```
+
+## Part A: Data Wrangling & EDA 
+
+### Task 1: Data Joining
+<!--- DO NOT DELETE THIS LINE - TASK 1 ANCHOR --->
+
+```{r}
+#| label: task-1-code
+# Write your Task 1 code here:
+
+
+```
+
+<!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
+
+#### Written Interpretation
+
+*Replace this text with your one-sentence explanation regarding the cleaning step performed before the join.*
+
+
+### Task 2: Missing Values Handling
+<!--- DO NOT DELETE THIS LINE - TASK 2 ANCHOR --->
+
+```{r}
+#| label: task-2-code
+# Write your Task 2 code here:
+
+
+```
+
+<!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
+
+#### Written Interpretation
+
+*Replace this text with your explanation of summary().*
+
+
+### Task 3: Genre Grouping
+<!--- DO NOT DELETE THIS LINE - TASK 3 ANCHOR --->
+
+```{r}
+#| label: task-3-code
+# Write your Task 3 code here:
+
+
+```
+
+```{r}
+#| label: task-3-verification
+# Write your verification code here:
+
+
+```
+
+<!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
+
+#### Written Interpretation
+
+*Replace this text with your empirical finding regarding the 'romantic comedy' sub-genre.*
+
+
+### Task 4: Genre Ratings Table
+<!--- DO NOT DELETE THIS LINE - TASK 4 ANCHOR --->
+
+```{r}
+#| label: task-4-code
+# Write your Task 4 code here:
+
+
+```
+
+```{r}
+#| label: task-4-verification
+# Write your verification code here:
+
+
+```
+
+<!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
+
+#### Written Interpretation
+
+*Replace this text with your empirical finding regarding the budget disparity between Horror and the blockbusters.*
+
+
+### Task 5: Ratings and Engagement Scores
+<!--- DO NOT DELETE THIS LINE - TASK 5 ANCHOR --->
+
+```{r}
+#| label: task-5-code
+# Write your Task 5 code here:
+
+
+```
+
+<!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
+
+#### Written Interpretation
+
+*Replace this text with your interpretation of the boxplots' visual footprints.*
+
+```{r}
+#| label: task-5-verification
+# Write your verification code here:
+
+
+```
+
+#### Empirical Verification
+
+*Replace this text with your empirical finding regarding the highest and lowest IQRs.*
+
+
+### Task 6: Engagement Score and Subscription Type
+<!--- DO NOT DELETE THIS LINE - TASK 6 ANCHOR --->
+
+```{r}
+#| label: task-6-code
+# Write your Task 6 code here:
+
+
+```
+
+```{r}
+#| label: task-6-verification
+# Write your verification code here:
+
+
+```
+
+#### Empirical Verification
+
+*Replace this text with your empirical finding regarding the distribution of users across age and subscription tiers.*
+
+<!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
+
+#### Written Interpretation
+
+*Replace this text with your explanation of the mathematical illusion.*
+
+
+---
+
+## Part B: Text Data Analysis
+
+### Task 7: Tokenization & Word Frequency
+<!--- DO NOT DELETE THIS LINE - TASK 7 ANCHOR --->
+
+```{r}
+#| label: task-7-code
+# Write your Task 7 code here:
+
+
+```
+
+<!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
+
+#### Written Interpretation
+
+*Replace this text with your explanation of why the top two words are unhelpful for analysis.*
+
+
+### Task 8: Sentiment Analysis
+<!--- DO NOT DELETE THIS LINE - TASK 8 ANCHOR --->
+
+```{r}
+#| label: task-8-code
+# Write your Task 8 code here:
+
+
+```
+
+<!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
+
+#### Written Interpretation
+
+*Replace this text with your explanation of the scatterplot outlier.*
+
+
+### Task 9: Advanced Text Mining (TF-IDF)
+<!--- DO NOT DELETE THIS LINE - TASK 9 ANCHOR --->
+
+```{r}
+#| label: task-9-code
+# Write your Task 9 code here: 
+
+
+```
+
+<!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
+
+#### Written Interpretation
+
+1. *Replace this text with the TF-IDF score for the word "film".*
+2. *Replace this text with your mathematical explanation using the IDF equation from the lecture.*
+3. *Replace this text with your comparison of TF-IDF vs frequency.*
+
+
+
+### Task 10: Executive Recommendation
+<!--- DO NOT DELETE THIS LINE - TASK 10 ANCHOR --->
+
+<!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
+
+#### Written Interpretation
+
+*Replace this text with your one-paragraph executive recommendation (max 150 words), citing at least three specific findings from earlier tasks and acknowledging one limitation.*
+
+
+---
+<!--- WORD COUNT ANCHOR --->
+```{r}
+#| label: word-count
+#| echo: false
+#| message: false
+#| warning: false
+
+count_prose_words <- function(file_path) {
+  # Read the raw lines of the file
+  lines <- readLines(file_path, warn = FALSE)
+  
+  # 1. Strip YAML Header (Lines between the first two '---')
+  yaml_bounds <- grep("^---$", lines)
+  if (length(yaml_bounds) >= 2) {
+    lines <- c(lines[1:(yaml_bounds[1]-1)], lines[(yaml_bounds[2]+1):length(lines)])
+  }
+  
+  # 2. Strip Code Chunks (Lines between pairs of '```')
+  chunk_bounds <- grep("^```", lines)
+  if (length(chunk_bounds) %% 2 == 0 && length(chunk_bounds) > 0) {
+    # Create a vector of line indices to remove
+    lines_to_remove <- integer(0)
+    for (i in seq(1, length(chunk_bounds), by = 2)) {
+      lines_to_remove <- c(lines_to_remove, chunk_bounds[i]:chunk_bounds[i+1])
+    }
+    lines <- lines[-lines_to_remove]
+  }
+  
+  # 3. Strip Markdown Headers (Lines starting with #)
+  lines <- lines[!grepl("^#+", trimws(lines))]
+  
+  # 4. Strip HTML Comments (Lines starting with <!--)
+  lines <- lines[!grepl("^<!--", trimws(lines))]
+  
+  # 5. Combine what's left into a single string
+  text_only <- paste(lines, collapse = " ")
+  
+  # 6. Remove common markdown characters that might be counted as words
+  text_only <- gsub("[*>`-]", " ", text_only)
+  
+  # 7. Count the remaining words
+  words <- unlist(strsplit(trimws(text_only), "\\s+"))
+  words <- words[words != ""]
+  
+  return(length(words))
+}
+
+# Run the function on the current file
+true_word_count <- count_prose_words(knitr::current_input())
+
+# Print the final result formatted nicely
+cat(sprintf("**Prose Word Count:** %d words", true_word_count))
+```

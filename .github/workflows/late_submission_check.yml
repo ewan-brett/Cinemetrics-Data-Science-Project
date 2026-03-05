@@ -1,0 +1,54 @@
+name: Late Submission Check
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  check-deadline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Time and Create Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Define the strict deadline: March 13, 2026, 17:00:00 UTC
+          # (UK time is UTC in March before daylight savings time changes)
+          DEADLINE_TIMESTAMP=$(date -d "2026-03-13 17:00:00 UTC" +%s)
+          
+          # Get the current time of the push
+          CURRENT_TIMESTAMP=$(date +%s)
+          
+          echo "Deadline Timestamp (UTC): $DEADLINE_TIMESTAMP"
+          echo "Current Timestamp (UTC): $CURRENT_TIMESTAMP"
+          
+          if [ "$CURRENT_TIMESTAMP" -gt "$DEADLINE_TIMESTAMP" ]; then
+            echo "Push is PAST the deadline. Checking for existing warning..."
+            
+            # Check if an issue with the specific title already exists to prevent spam
+            ISSUE_EXISTS=$(gh issue list --state all --search "in:title \"⚠️ Coursework Submitted After Deadline\"" --json number --jq 'length')
+            
+            if [ "$ISSUE_EXISTS" -eq "0" ]; then
+              echo "No previous warning found. Creating a Late Submission Notice Issue."
+              
+              gh issue create \
+                --title "⚠️ Coursework Submitted After Deadline" \
+                --body "Hello! This is an automated notification from the MA22019 teaching team.
+                
+                We noticed that a commit was pushed to your repository after the coursework deadline (**March 13, 2026, 5:00 PM UK Time**). 
+                
+                Please be aware that late penalties may apply to your final grade according to the University's QA53 framework, unless you have been granted an official extension via SAMIS.
+                
+                If you have an approved extension, please ignore this automated message. If you believe this notification is an error, please ensure you uploaded your files correctly and contact your instructor as soon as possible." \
+                --label "late-submission"
+            else
+              echo "Late submission warning already exists. Doing nothing to avoid spam."
+            fi
+          else
+            echo "Push is BEFORE the deadline. All good!"
+          fi
