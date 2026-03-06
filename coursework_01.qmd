@@ -1,6 +1,6 @@
 ---
 title: "Coursework 1: MA22019, Introduction to Data Science"
-author: "Replace With Your Name"
+author: "Ewan Brett"
 format: gfm
 ---
 
