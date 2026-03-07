@@ -58,13 +58,20 @@ cinemetrics <- clean_history %>%
          "engagement_score"= as.integer(engagement_score))
 
 head(cinemetrics,10)
+
+cinemetrics_messy <- history %>%
+  left_join(titles, by = "movie_id") %>%
+  left_join(users, by = "user_id")
+
+dim(cinemetrics)[1]
+dim(cinemetrics_messy)[1]
 ```
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*Removing duplicates in history was necessary because otherwise duplicate rows would remain after the join, which would skew the analysis of the variables. Performing the join without cleaning the data first leads to having 2593 additional rows. *
+*Removing duplicates in history was necessary because otherwise duplicate rows would remain after the join, which would skew the analysis of the variables. Performing the join without cleaning the data first results in a dataset with 22558 rows, whereas with cleaned data we have 19965 rows.*
 
 
 ### Task 2: Missing Values Handling
@@ -77,34 +84,79 @@ head(cinemetrics,10)
 cinemetrics %>% 
   is.na() %>% 
   colSums() %>% 
-  knitr::kable(col.names = c("Variable", "Missing_Count"))
+  kable(col.names = c("Variable", "Missing_Count"))
 
 cinemetrics$user_rating_100 %>% 
   median(na.rm = TRUE)
 
+cinemetrics$user_rating_100 %>% 
+  replace_na(0) %>% 
+  median()
 ```
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*summary() gives a general overview of the data, but may not account for missing values, especially if the variable is a str or a factor. We cannot be sure how it treats missing values, and calculates statistics like the median. Hence it is much more reliable to use is.na() to programmatically calculate the missing values in our data. That way we have the freedom over how these are handled, e.g. whether you remove missing values, or assign them a specific value, this can be decided based on context of the data which summary() wouldn't handle as effectively. *
+*summary() gives a general overview of the data, but may not account for missing values, especially if the variable is a str or a factor. We cannot be sure how it treats missing values, and calculates statistics like the median. Hence it is much more reliable to use is.na() to programmatically calculate the missing values in our data, and this shows us that there are 985 for user_rating_100. That way we have the freedom over how these are handled, e.g. whether you remove missing values, or assign them a specific value, this can be decided based on context of the data which summary() wouldn't handle as effectively. For example the median after removing the missing values of user_rating_100 is 71, however if we knew that users don't bother rating films they didn't like, then it would make more sense to assign missing values as 0, giving us a median of 70. *
 
 
 ### Task 3: Genre Grouping
+
 <!--- DO NOT DELETE THIS LINE - TASK 3 ANCHOR --->
 
 ```{r}
 #| label: task-3-code
 # Write your Task 3 code here:
+head(cinemetrics,20)
+
+unique(cinemetrics$genre_tags)
+
+cinemetrics <- cinemetrics %>%
+  mutate(
+    primary_genre = factor(genre_tags) %>%
+      fct_recode(
+        "Drama" = "drama, emotional",
+        "Drama" = "drama, critically-acclaimed",
+        "Romance" = "romantic comedy",
+        "Romance" = "rom-com",
+        "Comedy" = "comedy, family",
+        "Comedy" = "comedy",
+        "Sci-Fi" = "Science fiction",
+        "Sci-Fi" = "sci-fi",
+        "Sci-Fi" = "sci-fi, fantasy",
+        "Animation" = "animated",
+        "Animation" = "animation, kids",
+        "Animation" = "animation",
+        "Horror" = "terror",
+        "Horror" = "scary",
+        "Documentary" = "documentary, real-world",
+        "Romance" = "romantic",
+        "Action" = "action",
+        "Action" = "action, high-octane",
+        "Horror" = "horror") %>%
+      fct_lump_n(n = 5, other_level = "Other"))
 
 
+unique(cinemetrics$primary_genre)
+
+cinemetrics %>%
+  count(primary_genre, sort = TRUE) %>%
+  kable()
 ```
 
 ```{r}
 #| label: task-3-verification
 # Write your verification code here:
 
+cinemetrics %>%
+  group_by(genre_tags) %>%
+  summarise(
+    avg_rating = mean(user_rating_100, na.rm = TRUE),  
+    movie_count = n()                                  
+  ) %>%
+  filter(genre_tags %in% c("Romance", "romantic comedy", "rom-com", "romantic")) %>%  
+  kable(caption = "Romance vs Rom-Com")
 
 ```
 
@@ -112,7 +164,17 @@ cinemetrics$user_rating_100 %>%
 
 #### Written Interpretation
 
-*Replace this text with your empirical finding regarding the 'romantic comedy' sub-genre.*
+*Replace this text with your empirical finding regarding the 'romantic comedy' sub-genre. 
+
+
+
+
+notes: without grouping romcom and romance, other is the largest group with 4225 entries. so useful to group them as romcom is like a subcategory of romance, when we do that romance has 2295and other is no longer the largest category. this will be more helpful to do analysis on.
+
+
+
+
+*
 
 
 ### Task 4: Genre Ratings Table

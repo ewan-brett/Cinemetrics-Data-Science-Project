@@ -79,6 +79,30 @@ head(cinemetrics,10)
     #   movie_title <chr>, release_year <int>, budget_usd <int>, genre_tags <chr>,
     #   age <int>, subscription_type <chr>
 
+``` r
+cinemetrics_messy <- history %>%
+  left_join(titles, by = "movie_id") %>%
+  left_join(users, by = "user_id")
+```
+
+    Warning in left_join(., titles, by = "movie_id"): Detected an unexpected many-to-many relationship between `x` and `y`.
+    ℹ Row 14 of `x` matches multiple rows in `y`.
+    ℹ Row 85 of `y` matches multiple rows in `x`.
+    ℹ If a many-to-many relationship is expected, set `relationship =
+      "many-to-many"` to silence this warning.
+
+``` r
+dim(cinemetrics)[1]
+```
+
+    [1] 19965
+
+``` r
+dim(cinemetrics_messy)[1]
+```
+
+    [1] 22558
+
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
@@ -86,7 +110,8 @@ head(cinemetrics,10)
 *Removing duplicates in history was necessary because otherwise
 duplicate rows would remain after the join, which would skew the
 analysis of the variables. Performing the join without cleaning the data
-first leads to having 2593 additional rows. *
+first results in a dataset with 22558 rows, whereas with cleaned data we
+have 19965 rows.*
 
 ### Task 2: Missing Values Handling
 
@@ -98,7 +123,7 @@ first leads to having 2593 additional rows. *
 cinemetrics %>% 
   is.na() %>% 
   colSums() %>% 
-  knitr::kable(col.names = c("Variable", "Missing_Count"))
+  kable(col.names = c("Variable", "Missing_Count"))
 ```
 
 | Variable            | Missing_Count |
@@ -124,6 +149,14 @@ cinemetrics$user_rating_100 %>%
 
     [1] 71
 
+``` r
+cinemetrics$user_rating_100 %>% 
+  replace_na(0) %>% 
+  median()
+```
+
+    [1] 70
+
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
@@ -132,11 +165,15 @@ cinemetrics$user_rating_100 %>%
 missing values, especially if the variable is a str or a factor. We
 cannot be sure how it treats missing values, and calculates statistics
 like the median. Hence it is much more reliable to use is.na() to
-programmatically calculate the missing values in our data. That way we
-have the freedom over how these are handled, e.g. whether you remove
-missing values, or assign them a specific value, this can be decided
-based on context of the data which summary() wouldn’t handle as
-effectively. *
+programmatically calculate the missing values in our data, and this
+shows us that there are 985 for user_rating_100. That way we have the
+freedom over how these are handled, e.g. whether you remove missing
+values, or assign them a specific value, this can be decided based on
+context of the data which summary() wouldn’t handle as effectively. For
+example the median after removing the missing values of user_rating_100
+is 71, however if we knew that users don’t bother rating films they
+didn’t like, then it would make more sense to assign missing values as
+0, giving us a median of 70. *
 
 ### Task 3: Genre Grouping
 
@@ -144,18 +181,136 @@ effectively. *
 
 ``` r
 # Write your Task 3 code here:
+head(cinemetrics,20)
 ```
+
+    # A tibble: 20 × 13
+       user_id movie_id watch_date watch_duration_mins engagement_score
+         <dbl>    <dbl> <date>                   <int>            <int>
+     1     134       76 2025-03-22                 117               NA
+     2    1353       25 2026-02-21                 103               65
+     3    1367        1 2025-01-16                  15               24
+     4    2154       16 2025-10-21                 130               74
+     5     529       75 NA                          15               27
+     6     201       50 2025-11-16                  52               41
+     7     923       43 2026-02-22                  74               54
+     8    2192       23 0012-04-25                  15               30
+     9    2129       14 2025-04-11                 133               63
+    10    2187       85 2025-11-06                  68               39
+    11    1114       37 2025-09-29                  42               36
+    12     119       60 NA                         115               63
+    13    1767       90 2025-03-12                  28               19
+    14    2293       35 2025-12-16                  22               19
+    15     199       88 NA                          52               12
+    16    1380        5 0009-11-25                  37               26
+    17    2258       92 2025-06-25                  32               35
+    18    2526       85 2025-08-11                  89               56
+    19    1571       49 2025-03-08                  21               26
+    20    2215       86 2025-11-16                  19               40
+    # ℹ 8 more variables: user_rating_100 <int>, review_snippet <chr>,
+    #   movie_title <chr>, release_year <int>, budget_usd <int>, genre_tags <chr>,
+    #   age <int>, subscription_type <chr>
+
+``` r
+unique(cinemetrics$genre_tags)
+```
+
+     [1] "animation"                   "comedy, family"             
+     [3] "action"                      "Science fiction"            
+     [5] "animated"                    "drama, emotional"           
+     [7] "comedy"                      "sci-fi"                     
+     [9] "drama, critically-acclaimed" "horror"                     
+    [11] "romantic comedy"             "action, high-octane"        
+    [13] "romantic"                    "rom-com"                    
+    [15] "Drama"                       "sci-fi, fantasy"            
+    [17] "terror"                      "scary"                      
+    [19] "animation, kids"             "Romance"                    
+    [21] "documentary, real-world"     "Documentary"                
+
+``` r
+cinemetrics <- cinemetrics %>%
+  mutate(
+    primary_genre = factor(genre_tags) %>%
+      fct_recode(
+        "Drama" = "drama, emotional",
+        "Drama" = "drama, critically-acclaimed",
+        "Romance" = "romantic comedy",
+        "Romance" = "rom-com",
+        "Comedy" = "comedy, family",
+        "Comedy" = "comedy",
+        "Sci-Fi" = "Science fiction",
+        "Sci-Fi" = "sci-fi",
+        "Sci-Fi" = "sci-fi, fantasy",
+        "Animation" = "animated",
+        "Animation" = "animation, kids",
+        "Animation" = "animation",
+        "Horror" = "terror",
+        "Horror" = "scary",
+        "Documentary" = "documentary, real-world",
+        "Romance" = "romantic",
+        "Action" = "action",
+        "Action" = "action, high-octane",
+        "Horror" = "horror") %>%
+      fct_lump_n(n = 5, other_level = "Other"))
+
+
+unique(cinemetrics$primary_genre)
+```
+
+    [1] Animation Comedy    Other     Sci-Fi    Drama     Romance  
+    Levels: Animation Comedy Drama Romance Sci-Fi Other
+
+``` r
+cinemetrics %>%
+  count(primary_genre, sort = TRUE) %>%
+  kable()
+```
+
+| primary_genre |    n |
+|:--------------|-----:|
+| Animation     | 4207 |
+| Other         | 3728 |
+| Sci-Fi        | 3543 |
+| Drama         | 3307 |
+| Comedy        | 2885 |
+| Romance       | 2295 |
 
 ``` r
 # Write your verification code here:
+
+cinemetrics %>%
+  group_by(genre_tags) %>%
+  summarise(
+    avg_rating = mean(user_rating_100, na.rm = TRUE),  
+    movie_count = n()                                  
+  ) %>%
+  filter(genre_tags %in% c("Romance", "romantic comedy", "rom-com", "romantic")) %>%  
+  kable(caption = "Romance vs Rom-Com")
 ```
+
+| genre_tags      | avg_rating | movie_count |
+|:----------------|-----------:|------------:|
+| Romance         |   69.82660 |         991 |
+| rom-com         |   69.80269 |        1009 |
+| romantic        |   69.04196 |         150 |
+| romantic comedy |   66.35036 |         145 |
+
+Romance vs Rom-Com
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*Replace this text with your empirical finding regarding the ‘romantic
-comedy’ sub-genre.*
+\*Replace this text with your empirical finding regarding the ‘romantic
+comedy’ sub-genre.
+
+notes: without grouping romcom and romance, other is the largest group
+with 4225 entries. so useful to group them as romcom is like a
+subcategory of romance, when we do that romance has 2295and other is no
+longer the largest category. this will be more helpful to do analysis
+on.
+
+- 
 
 ### Task 4: Genre Ratings Table
 
@@ -289,4 +444,4 @@ and acknowledging one limitation.*
 
 <!--- WORD COUNT ANCHOR --->
 
-    **Prose Word Count:** 321 words
+    **Prose Word Count:** 434 words
