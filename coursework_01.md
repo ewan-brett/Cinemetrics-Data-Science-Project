@@ -94,13 +94,49 @@ first leads to having 2593 additional rows. *
 
 ``` r
 # Write your Task 2 code here:
+
+cinemetrics %>% 
+  is.na() %>% 
+  colSums() %>% 
+  knitr::kable(col.names = c("Variable", "Missing_Count"))
 ```
+
+| Variable            | Missing_Count |
+|:--------------------|--------------:|
+| user_id             |             0 |
+| movie_id            |             0 |
+| watch_date          |          5110 |
+| watch_duration_mins |           574 |
+| engagement_score    |           582 |
+| user_rating_100     |           985 |
+| review_snippet      |          1939 |
+| movie_title         |             0 |
+| release_year        |             0 |
+| budget_usd          |           980 |
+| genre_tags          |             0 |
+| age                 |            50 |
+| subscription_type   |            50 |
+
+``` r
+cinemetrics$user_rating_100 %>% 
+  median(na.rm = TRUE)
+```
+
+    [1] 71
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*Replace this text with your explanation of summary().*
+*summary() gives a general overview of the data, but may not account for
+missing values, especially if the variable is a str or a factor. We
+cannot be sure how it treats missing values, and calculates statistics
+like the median. Hence it is much more reliable to use is.na() to
+programmatically calculate the missing values in our data. That way we
+have the freedom over how these are handled, e.g. whether you remove
+missing values, or assign them a specific value, this can be decided
+based on context of the data which summary() wouldn’t handle as
+effectively. *
 
 ### Task 3: Genre Grouping
 
@@ -253,4 +289,4 @@ and acknowledging one limitation.*
 
 <!--- WORD COUNT ANCHOR --->
 
-    **Prose Word Count:** 232 words
+    **Prose Word Count:** 321 words
