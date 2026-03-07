@@ -28,16 +28,43 @@ library(knitr)
 
 ```{r}
 #| label: task-1-code
+#| message: FALSE
 # Write your Task 1 code here:
+titles <- read_csv("data/titles.csv")
+users <- read_csv("data/users.csv")
+history <- read_csv("data/history.csv")
 
+# cleaning the titles data
+clean_titles <- distinct(titles)
+dim(titles)[1] - dim(clean_titles)[1]
+# this has removed 10 duplicate rows
 
+# cleaning the history data
+clean_history <- distinct(history) %>% 
+  mutate("watch_date"= gsub("/","-",watch_date))
+dim(history)[1] - dim(clean_history)[1]
+# this has removed 311 duplicate rows
+
+# joining the data
+cinemetrics <- clean_history %>%
+  left_join(clean_titles, by = "movie_id") %>%
+  left_join(users, by = "user_id") %>% 
+  mutate("release_year"= as.integer(release_year), 
+         "budget_usd" = as.integer(budget_usd),
+         "age"= as.integer(age),
+         "user_rating_100" = as.integer(user_rating_100),
+         "watch_date" = as.Date(watch_date),
+         "watch_duration_mins" = as.integer(watch_duration_mins),
+         "engagement_score"= as.integer(engagement_score))
+
+head(cinemetrics,10)
 ```
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*Replace this text with your one-sentence explanation regarding the cleaning step performed before the join.*
+*Removing duplicates in history was necessary because otherwise duplicate rows would remain after the join, which would skew the analysis of the variables. Performing the join without cleaning the data first leads to having 2593 additional rows. *
 
 
 ### Task 2: Missing Values Handling
