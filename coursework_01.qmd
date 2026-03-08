@@ -153,10 +153,11 @@ cinemetrics %>%
   group_by(genre_tags) %>%
   summarise(
     avg_rating = mean(user_rating_100, na.rm = TRUE),  
-    movie_count = n()                                  
-  ) %>%
-  filter(genre_tags %in% c("Romance", "romantic comedy", "rom-com", "romantic")) %>%  
+    movie_count = n()) %>%
+  arrange(desc(movie_count)) %>%
+  filter(genre_tags %in% c("Romance", "romantic", "rom-com", "romantic comedy")) %>% 
   kable(caption = "Romance vs Rom-Com")
+
 
 ```
 
@@ -164,17 +165,7 @@ cinemetrics %>%
 
 #### Written Interpretation
 
-*Replace this text with your empirical finding regarding the 'romantic comedy' sub-genre. 
-
-
-
-
-notes: without grouping romcom and romance, other is the largest group with 4225 entries. so useful to group them as romcom is like a subcategory of romance, when we do that romance has 2295and other is no longer the largest category. this will be more helpful to do analysis on.
-
-
-
-
-*
+*This table shows us the original "genre_tags" has inconsistent labeling which makes it unsuitable to perform proper analysis. We see there are larger categories such as "rom-com" (1009 movies) and "romance" (991 movies), however we also have smaller categories representing the same group but differently names, such as "romantic" (150) and "romantic comedy" (145). Clearly "rom-com" and "romantic comedy" should be put in the same group and "romance" and "romantic" should also be the same group. However we then encounter a potential error which could effect our analysis, as "romantic" is just an adjective, and potentially there could be Rom-Coms in that category, which would be mislabeled if we kept Rom-Com and Romance as seperate categories. Further, I found that when we keep them as seperate categories, and group by the most frequent five categories, "Other" becomes the largest category with 4225 entries. It does not make sense to have such a large "Other" category when these can be grouped into bigger categories with similar properties. When we group them together, "Other" has only 2295 entries, hence we have more insightful categories. Hence, I have decided grouping Rom-coms and Romances as one category will be the best for our analysis, and allow for better interpretability.*
 
 
 ### Task 4: Genre Ratings Table
