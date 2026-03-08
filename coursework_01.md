@@ -521,7 +521,8 @@ top10_watched_movies <- cinemetrics %>%
 
 most_watched_movies <- cinemetrics %>%
   filter(movie_title %in% top10_watched_movies$movie_title) %>% 
-  mutate(movie_title = fct_reorder(movie_title, user_rating_100, .desc = TRUE, .na_rm = TRUE))
+  mutate(movie_title = fct_reorder(movie_title, user_rating_100, .desc = TRUE, .na_rm = TRUE),
+         movie_title = str_wrap(movie_title, width = 10)) # GenAI used to find str_wrap function, in order to display the movie titles neater in my plot
   
 
 most_watched_movies %>% 
@@ -558,18 +559,18 @@ most_watched_movies %>%
 ```
 
     # A tibble: 10 × 2
-       movie_title       IQR
-       <fct>           <dbl>
-     1 Inside Out       22.5
-     2 The Dark Knight  22  
-     3 Titanic          22  
-     4 WALL-E           22  
-     5 Avatar           21  
-     6 Inception        21  
-     7 Coco             20  
-     8 Interstellar     20  
-     9 Up               19  
-    10 Dune             18  
+       movie_title          IQR
+       <chr>              <dbl>
+     1 "Inside Out"        22.5
+     2 "The Dark\nKnight"  22  
+     3 "Titanic"           22  
+     4 "WALL-E"            22  
+     5 "Avatar"            21  
+     6 "Inception"         21  
+     7 "Coco"              20  
+     8 "Interstellar"      20  
+     9 "Up"                19  
+    10 "Dune"              18  
 
 #### Empirical Verification
 
