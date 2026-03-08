@@ -459,23 +459,123 @@ will be averaged out by more successful subcategories within “Action”.*
 
 ``` r
 # Write your Task 5 code here:
+
+cinemetrics %>% 
+  summarise(missing_titles = sum(is.na(movie_title)))
 ```
+
+    # A tibble: 1 × 1
+      missing_titles
+               <int>
+    1              0
+
+``` r
+cinemetrics %>% 
+  count(movie_title) %>% 
+  arrange(n)
+```
+
+    # A tibble: 100 × 2
+       movie_title                   n
+       <chr>                     <int>
+     1 Free Solo                    29
+     2 My Octopus Teacher           30
+     3 Summer of Soul               30
+     4 The Act of Killing           33
+     5 Won't You Be My Neighbor?    34
+     6 Fire of Love                 36
+     7 13th                         37
+     8 Blackfish                    38
+     9 Jiro Dreams of Sushi         39
+    10 March of the Penguins        39
+    # ℹ 90 more rows
+
+``` r
+cinemetrics %>% 
+  count(movie_id) %>% 
+  arrange(n)
+```
+
+    # A tibble: 100 × 2
+       movie_id     n
+          <dbl> <int>
+     1       64    29
+     2       65    30
+     3       70    30
+     4       68    33
+     5       71    34
+     6       69    36
+     7       73    37
+     8       72    38
+     9       66    39
+    10       67    39
+    # ℹ 90 more rows
+
+``` r
+# we get the same output, so I can be sure there are no formatting errors leading to movies titles being grouped incorrectly
+
+top10_watched_movies <- cinemetrics %>% 
+  count(movie_title) %>% 
+  arrange(desc(n)) %>% 
+  slice_head(n=10)
+
+most_watched_movies <- cinemetrics %>%
+  filter(movie_title %in% top10_watched_movies$movie_title) %>% 
+  mutate(movie_title = fct_reorder(movie_title, user_rating_100, .desc = TRUE, .na_rm = TRUE))
+  
+
+most_watched_movies %>% 
+  ggplot(aes(y= user_rating_100))+
+  geom_boxplot()+
+  facet_wrap(~ movie_title, nrow = 1)+
+  labs(y = "Movie Rating (0-100)", title = "Distribution of ratings for top 10 most watched films")+
+  theme(axis.ticks.x = element_blank(),
+      axis.text.x = element_blank()) # GenAI used to find and understand the theme() function
+```
+
+    Warning: Removed 255 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
+
+![](coursework_01_files/figure-commonmark/task-5-code-1.png)
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*Replace this text with your interpretation of the boxplots’ visual
-footprints.*
+*UP was the movie with the lowest outlier in ratings, at roughly 20/100,
+meaning one user gave it a very bad rating. However for judging overall
+audience opinion, we can discount this and look at the IQR. This is
+relatively small compared to the others in top 10, hence there was less
+variability in opinions and greater consensus among viewers’ ratings.*
 
 ``` r
 # Write your verification code here:
+
+most_watched_movies %>% 
+  group_by(movie_title) %>% 
+  summarise(IQR = IQR(user_rating_100, na.rm = TRUE)) %>% 
+  arrange(desc(IQR))
 ```
+
+    # A tibble: 10 × 2
+       movie_title       IQR
+       <fct>           <dbl>
+     1 Inside Out       22.5
+     2 The Dark Knight  22  
+     3 Titanic          22  
+     4 WALL-E           22  
+     5 Avatar           21  
+     6 Inception        21  
+     7 Coco             20  
+     8 Interstellar     20  
+     9 Up               19  
+    10 Dune             18  
 
 #### Empirical Verification
 
-*Replace this text with your empirical finding regarding the highest and
-lowest IQRs.*
+*This supports my interpretation, as Up has the second lowest IQR of
+19.0, meaning there was less variation in opinions. Inside out is the
+film with least consensus in opinions with IQR of 22.5.*
 
 ### Task 6: Engagement Score and Subscription Type
 
@@ -566,4 +666,4 @@ and acknowledging one limitation.*
 
 <!--- WORD COUNT ANCHOR --->
 
-    **Prose Word Count:** 727 words
+    **Prose Word Count:** 798 words

@@ -253,25 +253,54 @@ cinemetrics_test %>%
 #| label: task-5-code
 # Write your Task 5 code here:
 
+cinemetrics %>% 
+  summarise(missing_titles = sum(is.na(movie_title)))
+cinemetrics %>% 
+  count(movie_title) %>% 
+  arrange(n)
+cinemetrics %>% 
+  count(movie_id) %>% 
+  arrange(n)
+# we get the same output, so I can be sure there are no formatting errors leading to movies titles being grouped incorrectly
 
+top10_watched_movies <- cinemetrics %>% 
+  count(movie_title) %>% 
+  arrange(desc(n)) %>% 
+  slice_head(n=10)
+
+most_watched_movies <- cinemetrics %>%
+  filter(movie_title %in% top10_watched_movies$movie_title) %>% 
+  mutate(movie_title = fct_reorder(movie_title, user_rating_100, .desc = TRUE, .na_rm = TRUE))
+  
+
+most_watched_movies %>% 
+  ggplot(aes(y= user_rating_100))+
+  geom_boxplot()+
+  facet_wrap(~ movie_title, nrow = 1)+
+  labs(y = "Movie Rating (0-100)", title = "Distribution of ratings for top 10 most watched films")+
+  theme(axis.ticks.x = element_blank(),
+      axis.text.x = element_blank()) # GenAI used to find and understand the theme() function
 ```
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*Replace this text with your interpretation of the boxplots' visual footprints.*
+*UP was the movie with the lowest outlier in ratings, at roughly 20/100, meaning one user gave it a very bad rating. However for judging overall audience opinion, we can discount this and look at the IQR. This is relatively small compared to the others in top 10, hence there was less variability in opinions and greater consensus among viewers' ratings.*
 
 ```{r}
 #| label: task-5-verification
 # Write your verification code here:
 
-
+most_watched_movies %>% 
+  group_by(movie_title) %>% 
+  summarise(IQR = IQR(user_rating_100, na.rm = TRUE)) %>% 
+  arrange(desc(IQR))
 ```
 
 #### Empirical Verification
 
-*Replace this text with your empirical finding regarding the highest and lowest IQRs.*
+*This supports my interpretation, as Up has the second lowest IQR of 19.0, meaning there was less variation in opinions. Inside out is the film with least consensus in opinions with IQR of 22.5.*
 
 
 ### Task 6: Engagement Score and Subscription Type
