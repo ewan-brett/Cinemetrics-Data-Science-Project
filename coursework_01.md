@@ -181,35 +181,25 @@ didn’t like, then it would make more sense to assign missing values as
 
 ``` r
 # Write your Task 3 code here:
-head(cinemetrics,20)
+
+cinemetrics %>%
+  count(genre_tags, sort = TRUE)
 ```
 
-    # A tibble: 20 × 13
-       user_id movie_id watch_date watch_duration_mins engagement_score
-         <dbl>    <dbl> <date>                   <int>            <int>
-     1     134       76 2025-03-22                 117               NA
-     2    1353       25 2026-02-21                 103               65
-     3    1367        1 2025-01-16                  15               24
-     4    2154       16 2025-10-21                 130               74
-     5     529       75 NA                          15               27
-     6     201       50 2025-11-16                  52               41
-     7     923       43 2026-02-22                  74               54
-     8    2192       23 0012-04-25                  15               30
-     9    2129       14 2025-04-11                 133               63
-    10    2187       85 2025-11-06                  68               39
-    11    1114       37 2025-09-29                  42               36
-    12     119       60 NA                         115               63
-    13    1767       90 2025-03-12                  28               19
-    14    2293       35 2025-12-16                  22               19
-    15     199       88 NA                          52               12
-    16    1380        5 0009-11-25                  37               26
-    17    2258       92 2025-06-25                  32               35
-    18    2526       85 2025-08-11                  89               56
-    19    1571       49 2025-03-08                  21               26
-    20    2215       86 2025-11-16                  19               40
-    # ℹ 8 more variables: user_rating_100 <int>, review_snippet <chr>,
-    #   movie_title <chr>, release_year <int>, budget_usd <int>, genre_tags <chr>,
-    #   age <int>, subscription_type <chr>
+    # A tibble: 22 × 2
+       genre_tags                      n
+       <chr>                       <int>
+     1 animated                     1667
+     2 animation                    1633
+     3 comedy, family               1516
+     4 Science fiction              1480
+     5 sci-fi, fantasy              1376
+     6 comedy                       1369
+     7 drama, emotional             1213
+     8 drama, critically-acclaimed  1158
+     9 scary                        1010
+    10 rom-com                      1009
+    # ℹ 12 more rows
 
 ``` r
 unique(cinemetrics$genre_tags)
@@ -228,37 +218,32 @@ unique(cinemetrics$genre_tags)
     [21] "documentary, real-world"     "Documentary"                
 
 ``` r
-cinemetrics <- cinemetrics %>%
-  mutate(
-    primary_genre = factor(genre_tags) %>%
-      fct_recode(
-        "Drama" = "drama, emotional",
-        "Drama" = "drama, critically-acclaimed",
-        "Romance" = "romantic comedy",
-        "Romance" = "rom-com",
-        "Comedy" = "comedy, family",
-        "Comedy" = "comedy",
-        "Sci-Fi" = "Science fiction",
-        "Sci-Fi" = "sci-fi",
-        "Sci-Fi" = "sci-fi, fantasy",
-        "Animation" = "animated",
-        "Animation" = "animation, kids",
-        "Animation" = "animation",
-        "Horror" = "terror",
-        "Horror" = "scary",
-        "Documentary" = "documentary, real-world",
-        "Romance" = "romantic",
-        "Action" = "action",
-        "Action" = "action, high-octane",
-        "Horror" = "horror") %>%
-      fct_lump_n(n = 5, other_level = "Other"))
+cinemetrics <- cinemetrics %>% 
+  mutate(primary_genre = fct_collapse(factor(genre_tags),
+      "Animation" = c("animated", "animation", "animation, kids"),
+      "Comedy" = c("comedy, family", "comedy"),
+      "Sci-Fi" = c("sci-fi", "Science fiction", "sci-fi, fantasy"),
+      "Action" = c("action","action, high-octane"),
+      "Romance" = c("romantic comedy", "rom-com", "romantic", "Romance"),
+      "Horror" = c("horror", "terror", "scary"),
+      "Documentary" = c("documentary, real-world", "Documentary"),
+      "Drama" = c("Drama", "drama, emotional", "drama, critically-acclaimed"),
+      other_level = "Other"))
 
 
 unique(cinemetrics$primary_genre)
 ```
 
-    [1] Animation Comedy    Other     Sci-Fi    Drama     Romance  
-    Levels: Animation Comedy Drama Romance Sci-Fi Other
+    [1] Animation   Comedy      Action      Sci-Fi      Drama       Horror     
+    [7] Romance     Documentary
+    Levels: Action Animation Comedy Documentary Drama Horror Romance Sci-Fi
+
+``` r
+levels(cinemetrics$primary_genre)
+```
+
+    [1] "Action"      "Animation"   "Comedy"      "Documentary" "Drama"      
+    [6] "Horror"      "Romance"     "Sci-Fi"     
 
 ``` r
 cinemetrics %>%
@@ -269,11 +254,13 @@ cinemetrics %>%
 | primary_genre |    n |
 |:--------------|-----:|
 | Animation     | 4207 |
-| Other         | 3728 |
 | Sci-Fi        | 3543 |
 | Drama         | 3307 |
 | Comedy        | 2885 |
 | Romance       | 2295 |
+| Horror        | 1798 |
+| Action        | 1585 |
+| Documentary   |  345 |
 
 ``` r
 # Write your verification code here:
@@ -303,7 +290,18 @@ Romance vs Rom-Com
 
 NEED TO CHANGE THIS:
 
-*This table shows us the original “genre_tags” has inconsistent labeling
+\*When “romantic comedy” movies are collapsed into the “Romance”
+category, the differences in ratings are lost. The “Romance” tag
+contains 991 movies with an average rating of 69.83, while the “romantic
+comedy” category is much smaller with only 145 movies and a
+significantly lower average rating of 66.35. When these categories are
+grouped together, the large number of higher-rated “Romance” films
+dominates the average. As a result, the poorer performance of romantic
+comedies is masked, creating a statistical distortion as the combined
+category appears to perform better than the “romantic comedy” films
+actually do.
+
+This table shows us the original “genre_tags” has inconsistent labeling
 which makes it unsuitable to perform proper analysis. We see there are
 larger categories such as “rom-com” (1009 movies) and “romance” (991
 movies), however we also have smaller categories representing the same
@@ -321,7 +319,7 @@ be grouped into bigger categories with similar properties. When we group
 them together, “Other” has only 2295 entries, hence we have more
 insightful categories. Hence, I have decided grouping Rom-coms and
 Romances as one category will be the best for our analysis, and allow
-for better interpretability.*
+for better interpretability.\*
 
 ### Task 4: Genre Ratings Table
 
@@ -335,61 +333,21 @@ cinemetrics %>%
     avg_rating = mean(user_rating_100, na.rm = TRUE),  
     movie_count = n()) %>%
   arrange(desc(avg_rating)) %>%
-  kable(caption = "Romance vs Rom-Com")
+  kable(caption = "Average rating by Genre")
 ```
 
 | primary_genre | avg_rating | movie_count |
 |:--------------|-----------:|------------:|
-| Other         |   74.34502 |        3728 |
+| Horror        |   79.77719 |        1798 |
 | Comedy        |   70.07359 |        2885 |
 | Drama         |   69.83692 |        3307 |
+| Documentary   |   69.73333 |         345 |
 | Animation     |   69.69912 |        4207 |
 | Sci-Fi        |   69.68587 |        3543 |
 | Romance       |   69.54708 |        2295 |
+| Action        |   69.21661 |        1585 |
 
-Romance vs Rom-Com
-
-``` r
-cinemetrics_test <- cinemetrics %>%
-  mutate(primary_genre = factor(genre_tags) %>%
-     fct_recode(
-                 "Drama" = "drama, emotional",
-                 "Drama" = "drama, critically-acclaimed",
-                 "Rom-Com" = "romantic comedy",
-                 "Rom-Com" = "rom-com",
-                 "Comedy" = "comedy, family",
-                 "Comedy" = "comedy",
-                 "Sci-Fi" = "Science fiction",
-                 "Sci-Fi" = "sci-fi",
-                 "Sci-Fi" = "sci-fi, fantasy",
-                 "Animation" = "animated",
-                "Animation" = "animation, kids",
-                "Animation" = "animation",
-                 "Horror" = "terror",
-                 "Horror" = "scary",
-                 "Documentary" = "documentary, real-world",
-                 "Romance" = "romantic",
-                 "Action" = "action",
-                 "Action" = "action, high-octane",
-                 "Horror" = "horror"))
-
-     
-cinemetrics_test %>%
-count(primary_genre, sort = TRUE) %>%
-knitr::kable()
-```
-
-| primary_genre |    n |
-|:--------------|-----:|
-| Animation     | 4207 |
-| Sci-Fi        | 3543 |
-| Drama         | 3307 |
-| Comedy        | 2885 |
-| Horror        | 1798 |
-| Action        | 1585 |
-| Rom-Com       | 1154 |
-| Romance       | 1141 |
-| Documentary   |  345 |
+Average rating by Genre
 
 ``` r
 # Write your verification code here:
@@ -400,30 +358,8 @@ cinemetrics %>%
     avg_budget_USD = mean(budget_usd, na.rm = TRUE),
     movie_count = n()) %>%
   arrange(desc(avg_rating)) %>%
-  kable(caption = "Budget (USD) vs Average rating (categories lumped)")
-```
-
-| primary_genre | avg_rating | avg_budget_USD | movie_count |
-|:--------------|-----------:|---------------:|------------:|
-| Other         |   74.34502 |       58846173 |        3728 |
-| Comedy        |   70.07359 |       48351193 |        2885 |
-| Drama         |   69.83692 |       22857593 |        3307 |
-| Animation     |   69.69912 |      122994708 |        4207 |
-| Sci-Fi        |   69.68587 |      139588009 |        3543 |
-| Romance       |   69.54708 |       56494292 |        2295 |
-
-Budget (USD) vs Average rating (categories lumped)
-
-``` r
-cinemetrics_test %>%
-  group_by(primary_genre) %>%
-  summarise(
-    avg_rating = mean(user_rating_100, na.rm = TRUE), 
-    avg_budget_USD = mean(budget_usd, na.rm = TRUE),
-    movie_count = n()) %>%
-  arrange(desc(avg_rating)) %>%
-  filter(primary_genre %in% c("Horror", "Sci-Fi", "Action")) %>% 
-  kable(caption = "Budget (USD) vs Average rating (categories not lumped)")
+  filter(primary_genre %in% c("Horror", "Action", "Sci-Fi")) %>% 
+  kable(caption = "Budget (USD) vs Average rating")
 ```
 
 | primary_genre | avg_rating | avg_budget_USD | movie_count |
@@ -432,13 +368,48 @@ cinemetrics_test %>%
 | Sci-Fi        |   69.68587 |      139588009 |        3543 |
 | Action        |   69.21661 |      115543533 |        1585 |
 
-Budget (USD) vs Average rating (categories not lumped)
+Budget (USD) vs Average rating
+
+``` r
+cinemetrics %>% 
+  filter(genre_tags %in% c("action", "action, high-octane")) %>% 
+  group_by(genre_tags) %>% 
+  summarise(avg_rating = mean(user_rating_100, na.rm = TRUE), 
+    avg_budget_USD = mean(budget_usd, na.rm = TRUE),
+    movie_count = n()) %>% 
+  kable(caption = "Budget (USD) vs Average rating for Action subcategories")
+```
+
+| genre_tags          | avg_rating | avg_budget_USD | movie_count |
+|:--------------------|-----------:|---------------:|------------:|
+| action              |   69.35113 |      141788991 |         654 |
+| action, high-octane |   69.12289 |       97106874 |         931 |
+
+Budget (USD) vs Average rating for Action subcategories
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*Sci-Fi has the largest budget (139588009USD), however it has the second
+\*From our data, there is evidence that larger budget does not
+necessarily mean higher average rating. Our results show the highest
+average rating was “Horror” with 79.78, however the average budget for
+these movies was only approximately \$10.2m. We can see that on the
+other hand, “Sci-Fi” and “Action” both had budgets of over \$100m, but
+despite this they both had average ratings of roughly 69. This shows
+that larger budget does not necessarily mean users preferred the movies.
+
+“Action” is a very broad category and may hide valuable information
+about differences in sub-genres. As there are many different smaller
+subcategories of action films, by collapsing them into one large
+category we lose the ability to compare performances of these
+sub-genres, and the well-performing ones will be balanced out by the
+poorly performing ones. In the case of this data, we have only collapsed
+two sub-genres to make “action” and both of them have ratings of roughly
+69, differing by only 0.3. Hence our grouping isn’t masking the
+performance of any sub-genres in this case.
+
+Sci-Fi has the largest budget (139588009USD), however it has the second
 lowest average rating. We see here that Horror and Action are not part
 of the top 5 categories, and therefore come under “Other”. The average
 budget for “Other” (58846173USD) is roughly half of the Sci-Fi budget,
@@ -451,7 +422,7 @@ Action has the lowest rating (69.22) and a much larger budget
 performance of many different sub-categories balance out, so we cannot
 really make good inferences from the data. For example, more niche
 categories which don’t perform well won’t show in our inferences as they
-will be averaged out by more successful subcategories within “Action”.*
+will be averaged out by more successful subcategories within “Action”.\*
 
 ### Task 5: Ratings and Engagement Scores
 
@@ -668,4 +639,4 @@ and acknowledging one limitation.*
 
 <!--- WORD COUNT ANCHOR --->
 
-    **Prose Word Count:** 798 words
+    **Prose Word Count:** 1074 words
