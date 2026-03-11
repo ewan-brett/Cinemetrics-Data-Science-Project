@@ -51,20 +51,14 @@ dim(history)[1] - dim(clean_history)[1]
 cinemetrics <- clean_history %>%
   left_join(clean_titles, by = "movie_id") %>%
   left_join(users, by = "user_id") %>% 
-  mutate("release_year"= as.integer(release_year), 
-         "budget_usd" = as.integer(budget_usd),
-         "age"= as.integer(age),
-         "user_rating_100" = as.integer(user_rating_100),
-         "watch_date" = as.Date(watch_date),
-         "watch_duration_mins" = as.integer(watch_duration_mins),
-         "engagement_score"= as.integer(engagement_score))
+  mutate("watch_date" = as.Date(watch_date))
 
 head(cinemetrics,10)
 ```
 
     # A tibble: 10 × 13
        user_id movie_id watch_date watch_duration_mins engagement_score
-         <dbl>    <dbl> <date>                   <int>            <int>
+         <dbl>    <dbl> <date>                   <dbl>            <dbl>
      1     134       76 2025-03-22                 117               NA
      2    1353       25 2026-02-21                 103               65
      3    1367        1 2025-01-16                  15               24
@@ -75,9 +69,9 @@ head(cinemetrics,10)
      8    2192       23 0012-04-25                  15               30
      9    2129       14 2025-04-11                 133               63
     10    2187       85 2025-11-06                  68               39
-    # ℹ 8 more variables: user_rating_100 <int>, review_snippet <chr>,
-    #   movie_title <chr>, release_year <int>, budget_usd <int>, genre_tags <chr>,
-    #   age <int>, subscription_type <chr>
+    # ℹ 8 more variables: user_rating_100 <dbl>, review_snippet <chr>,
+    #   movie_title <chr>, release_year <dbl>, budget_usd <dbl>, genre_tags <chr>,
+    #   age <dbl>, subscription_type <chr>
 
 ``` r
 cinemetrics_messy <- history %>%
@@ -120,10 +114,12 @@ have 19965 rows.*
 ``` r
 # Write your Task 2 code here:
 
-cinemetrics %>% 
+missing_summary <- cinemetrics %>% 
   is.na() %>% 
-  colSums() %>% 
-  kable(col.names = c("Variable", "Missing_Count"))
+  colSums()
+
+missing_summary %>% 
+    kable(col.names = c("Variable", "Missing_Count"))
 ```
 
 | Variable            | Missing_Count |
@@ -556,22 +552,111 @@ film with least consensus in opinions with IQR of 22.5.*
 
 ``` r
 # Write your Task 6 code here:
+
+cinemetrics %>% 
+  filter(!is.na(subscription_type)) %>% 
+  group_by(subscription_type) %>% 
+  summarise(avg_engagement = mean(engagement_score, na.rm = TRUE)) %>% 
+  arrange(desc(avg_engagement)) %>% 
+  kable()
 ```
+
+| subscription_type | avg_engagement |
+|:------------------|---------------:|
+| Premium           |       56.47616 |
+| Basic             |       44.03936 |
+
+``` r
+age_quantiles <- quantile(cinemetrics$age, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+
+# gen AI was used to understand the probs argument in quantile()
+
+age_quantiles %>% 
+  kable(col.names = c("Quantile", "Value"), caption = "User age quantiles")
+```
+
+| Quantile | Value |
+|:---------|------:|
+| 25%      |    25 |
+| 50%      |    35 |
+| 75%      |    45 |
+
+User age quantiles
+
+``` r
+cinemetrics <- cinemetrics %>% 
+  mutate(age_tier = case_when(age <= age_quantiles[1] ~ "1",
+                              age <= age_quantiles[2] ~ "2",
+                              age <= age_quantiles[3] ~ "3",
+                              age > age_quantiles[3]  ~ "4"))
+
+avg_engagement <- cinemetrics %>% 
+  filter(!is.na(subscription_type), !is.na(age_tier)) %>% 
+  group_by(age_tier, subscription_type) %>% 
+  summarise(
+    avg_engagement = mean(engagement_score, na.rm = TRUE),
+    .groups = "drop"
+  ) %>% 
+  arrange(desc(avg_engagement)) 
+
+avg_engagement %>% 
+  kable(caption = "Average Engagement by Age Tier and Subscription Type")
+```
+
+| age_tier | subscription_type | avg_engagement |
+|:---------|:------------------|---------------:|
+| 4        | Basic             |       80.10280 |
+| 3        | Basic             |       74.33949 |
+| 4        | Premium           |       68.76609 |
+| 3        | Premium           |       55.09623 |
+| 2        | Basic             |       50.92584 |
+| 2        | Premium           |       38.23744 |
+| 1        | Basic             |       28.93870 |
+| 1        | Premium           |       12.66042 |
+
+Average Engagement by Age Tier and Subscription Type
 
 ``` r
 # Write your verification code here:
+
+age_subtype_count <- cinemetrics %>% 
+  filter(!is.na(subscription_type), !is.na(age_tier)) %>% 
+  group_by(age_tier, subscription_type) %>% 
+  summarise(total = n(), .groups = "drop") %>% 
+  pivot_wider(names_from = subscription_type,
+              values_from = total)
+  
+age_subtype_count %>% 
+  kable(caption = "No. users per subscription type by age quartile")
 ```
+
+| age_tier | Basic | Premium |
+|:---------|------:|--------:|
+| 1        |  4958 |     447 |
+| 2        |  3523 |    1496 |
+| 3        |   994 |    3762 |
+| 4        |   557 |    4178 |
+
+No. users per subscription type by age quartile
 
 #### Empirical Verification
 
-*Replace this text with your empirical finding regarding the
-distribution of users across age and subscription tiers.*
+*For users 25 or younger, 91.0% use the basic subscription type. As age
+increases, proportion of users with basic decreases. Only 13.3% users
+over 45 have a basic subscription.*
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*Replace this text with your explanation of the mathematical illusion.*
+*Our 2D analysis shows that engagement score for premium users (56.5) is
+higher than that of basic users (44.0). However in our analysis split by
+age category, basic users have higher engagement than premium for all
+age categories. This change in observed trend is due to the differences
+in group sizes and distribution of users. For instance, in this scenario
+premium users are more highly concentrated in higher age categories (as
+seen in verification), where engagement levels are higher generally,
+hence the average engagement is weighted towards premium. *
 
 ------------------------------------------------------------------------
 
@@ -639,4 +724,4 @@ and acknowledging one limitation.*
 
 <!--- WORD COUNT ANCHOR --->
 
-    **Prose Word Count:** 1074 words
+    **Prose Word Count:** 1164 words

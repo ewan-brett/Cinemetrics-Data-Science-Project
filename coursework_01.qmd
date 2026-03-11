@@ -49,19 +49,14 @@ dim(history)[1] - dim(clean_history)[1]
 cinemetrics <- clean_history %>%
   left_join(clean_titles, by = "movie_id") %>%
   left_join(users, by = "user_id") %>% 
-  mutate("release_year"= as.integer(release_year), 
-         "budget_usd" = as.integer(budget_usd),
-         "age"= as.integer(age),
-         "user_rating_100" = as.integer(user_rating_100),
-         "watch_date" = as.Date(watch_date),
-         "watch_duration_mins" = as.integer(watch_duration_mins),
-         "engagement_score"= as.integer(engagement_score))
+  mutate("watch_date" = as.Date(watch_date))
 
 head(cinemetrics,10)
 
 cinemetrics_messy <- history %>%
   left_join(titles, by = "movie_id") %>%
   left_join(users, by = "user_id")
+
 
 dim(cinemetrics)[1]
 dim(cinemetrics_messy)[1]
@@ -81,10 +76,12 @@ dim(cinemetrics_messy)[1]
 #| label: task-2-code
 # Write your Task 2 code here:
 
-cinemetrics %>% 
+missing_summary <- cinemetrics %>% 
   is.na() %>% 
-  colSums() %>% 
-  kable(col.names = c("Variable", "Missing_Count"))
+  colSums()
+
+missing_summary %>% 
+    kable(col.names = c("Variable", "Missing_Count"))
 
 cinemetrics$user_rating_100 %>% 
   median(na.rm = TRUE)
@@ -149,7 +146,6 @@ cinemetrics %>%
   arrange(desc(movie_count)) %>%
   filter(genre_tags %in% c("Romance", "romantic", "rom-com", "romantic comedy")) %>% 
   kable(caption = "Romance vs Rom-Com")
-
 
 ```
 
@@ -282,6 +278,37 @@ most_watched_movies %>%
 #| label: task-6-code
 # Write your Task 6 code here:
 
+cinemetrics %>% 
+  filter(!is.na(subscription_type)) %>% 
+  group_by(subscription_type) %>% 
+  summarise(avg_engagement = mean(engagement_score, na.rm = TRUE)) %>% 
+  arrange(desc(avg_engagement)) %>% 
+  kable()
+
+age_quantiles <- quantile(cinemetrics$age, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+
+# gen AI was used to understand the probs argument in quantile()
+
+age_quantiles %>% 
+  kable(col.names = c("Quantile", "Value"), caption = "User age quantiles")
+  
+cinemetrics <- cinemetrics %>% 
+  mutate(age_tier = case_when(age <= age_quantiles[1] ~ "1",
+                              age <= age_quantiles[2] ~ "2",
+                              age <= age_quantiles[3] ~ "3",
+                              age > age_quantiles[3]  ~ "4"))
+
+avg_engagement <- cinemetrics %>% 
+  filter(!is.na(subscription_type), !is.na(age_tier)) %>% 
+  group_by(age_tier, subscription_type) %>% 
+  summarise(
+    avg_engagement = mean(engagement_score, na.rm = TRUE),
+    .groups = "drop"
+  ) %>% 
+  arrange(desc(avg_engagement)) 
+
+avg_engagement %>% 
+  kable(caption = "Average Engagement by Age Tier and Subscription Type")
 
 ```
 
@@ -289,18 +316,26 @@ most_watched_movies %>%
 #| label: task-6-verification
 # Write your verification code here:
 
-
+age_subtype_count <- cinemetrics %>% 
+  filter(!is.na(subscription_type), !is.na(age_tier)) %>% 
+  group_by(age_tier, subscription_type) %>% 
+  summarise(total = n(), .groups = "drop") %>% 
+  pivot_wider(names_from = subscription_type,
+              values_from = total)
+  
+age_subtype_count %>% 
+  kable(caption = "No. users per subscription type by age quartile")
 ```
 
 #### Empirical Verification
 
-*Replace this text with your empirical finding regarding the distribution of users across age and subscription tiers.*
+*For users 25 or younger, 91.0% use the basic subscription type. As age increases, proportion of users with basic decreases. Only 13.3% users over 45 have a basic subscription.*
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*Replace this text with your explanation of the mathematical illusion.*
+*Our 2D analysis shows that engagement score for premium users (56.5) is higher than that of basic users (44.0). However in our analysis split by age category, basic users have higher engagement than premium for all age categories. This change in observed trend is due to the differences in group sizes and distribution of users. For instance, in this scenario premium users are more highly concentrated in higher age categories (as seen in verification), where engagement levels are higher generally, hence the average engagement is weighted towards premium. *
 
 
 ---
