@@ -668,14 +668,31 @@ hence the average engagement is weighted towards premium. *
 
 ``` r
 # Write your Task 7 code here:
+
+words <- cinemetrics %>%
+  unnest_tokens(word, review_snippet) %>% 
+  anti_join(stop_words, join_by(word))
+
+top_10_words <- words %>%
+  count(word, sort = TRUE) %>% 
+  slice_head(n=10)
+
+top_10_words %>% 
+  ggplot(aes(x = fct_reorder(word,-n), y = n))+
+  geom_col(fill = "firebrick")+
+  labs(title = "Top 10 Most Frequent Words in Movie Reviews", x = "Word", y = "Frequency")
 ```
+
+![](coursework_01_files/figure-commonmark/task-7-code-1.png)
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-*Replace this text with your explanation of why the top two words are
-unhelpful for analysis.*
+*The top two words are “film” (5674 counts) and “watch” (5317 counts)
+which are unhelpful for analysis as they tell us nothing about the the
+opinion of the user. They are generic and we cannot infer any
+information from them, such as whether the user liked the film.*
 
 ### Task 8: Sentiment Analysis
 
@@ -724,4 +741,4 @@ and acknowledging one limitation.*
 
 <!--- WORD COUNT ANCHOR --->
 
-    **Prose Word Count:** 1164 words
+    **Prose Word Count:** 1196 words
