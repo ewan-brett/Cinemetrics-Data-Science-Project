@@ -802,6 +802,17 @@ plot_sentiment_rating + plot_remove_outlier
 
 ``` r
 # Write your Task 9 code here: 
+
+genre_words <- words %>% 
+  count(primary_genre, word, sort = TRUE)
+
+genre_tf_idf <- genre_words  %>% 
+  bind_tf_idf(term = word, document = primary_genre, n = n)
+
+top_tf_idf_by_genre <- genre_tf_idf %>% 
+  group_by(primary_genre) %>% 
+  slice_max(order_by = tf_idf,n = 1) %>% 
+  arrange(primary_genre, desc(tf_idf))
 ```
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
