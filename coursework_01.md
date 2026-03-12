@@ -12,6 +12,7 @@ data dictionary, and detailed task requirements before starting.
 library(tidyverse)
 library(tidytext)
 library(knitr)
+library(patchwork)
 ```
 
 ## Part A: Data Wrangling & EDA
@@ -597,24 +598,21 @@ avg_engagement <- cinemetrics %>%
     avg_engagement = mean(engagement_score, na.rm = TRUE),
     .groups = "drop"
   ) %>% 
-  arrange(desc(avg_engagement)) 
+  arrange(age_tier) 
 
 avg_engagement %>% 
-  kable(caption = "Average Engagement by Age Tier and Subscription Type")
+  pivot_wider(names_from = subscription_type, values_from = avg_engagement) %>% 
+  kable(caption = "Average Engagement")
 ```
 
-| age_tier | subscription_type | avg_engagement |
-|:---------|:------------------|---------------:|
-| 4        | Basic             |       80.10280 |
-| 3        | Basic             |       74.33949 |
-| 4        | Premium           |       68.76609 |
-| 3        | Premium           |       55.09623 |
-| 2        | Basic             |       50.92584 |
-| 2        | Premium           |       38.23744 |
-| 1        | Basic             |       28.93870 |
-| 1        | Premium           |       12.66042 |
+| age_tier |    Basic |  Premium |
+|:---------|---------:|---------:|
+| 1        | 28.93870 | 12.66042 |
+| 2        | 50.92584 | 38.23744 |
+| 3        | 74.33949 | 55.09623 |
+| 4        | 80.10280 | 68.76609 |
 
-Average Engagement by Age Tier and Subscription Type
+Average Engagement
 
 ``` r
 # Write your verification code here:
@@ -669,7 +667,11 @@ hence the average engagement is weighted towards premium. *
 ``` r
 # Write your Task 7 code here:
 
-words <- cinemetrics %>%
+# create an artificial review id category so that we can distinguish between reviews
+cinemetrics <- cinemetrics %>%
+  mutate(review_id = row_number())
+
+words <- cinemetrics %>% 
   unnest_tokens(word, review_snippet) %>% 
   anti_join(stop_words, join_by(word))
 
@@ -700,7 +702,93 @@ information from them, such as whether the user liked the film.*
 
 ``` r
 # Write your Task 8 code here:
+
+bing_lexicon <- get_sentiments("bing")
+
+review_sentiment <- words %>% 
+  inner_join(bing_lexicon, by = "word") 
+
+sentiment_count <- review_sentiment %>% 
+    count(review_id, sentiment) %>% 
+    pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+    mutate(net_sentiment = positive - negative)
+
+head(sentiment_count,50)
 ```
+
+    # A tibble: 50 × 4
+       review_id positive negative net_sentiment
+           <int>    <int>    <int>         <int>
+     1         1        1        0             1
+     2         2        1        0             1
+     3         3        2        0             2
+     4         5        1        0             1
+     5         7        2        0             2
+     6        11        0        1            -1
+     7        12        1        1             0
+     8        13        2        0             2
+     9        14        0        1            -1
+    10        15        1        0             1
+    # ℹ 40 more rows
+
+``` r
+cinemetrics <- cinemetrics %>% 
+  left_join(sentiment_count, join_by(review_id))
+
+sentiment_v_rating <- cinemetrics %>% 
+  group_by(primary_genre) %>% 
+  summarise(
+    avg_net_sentiment = mean(net_sentiment, na.rm = TRUE),
+    avg_user_rating = mean(user_rating_100, na.rm = TRUE))
+
+sentiment_v_rating %>% 
+  kable(caption = "Overall sentiment & rating of film genres")
+```
+
+| primary_genre | avg_net_sentiment | avg_user_rating |
+|:--------------|------------------:|----------------:|
+| Action        |         0.7436620 |        69.21661 |
+| Animation     |         0.7523973 |        69.69912 |
+| Comedy        |         0.7540984 |        70.07359 |
+| Documentary   |         0.7992126 |        69.73333 |
+| Drama         |         0.7899524 |        69.83692 |
+| Horror        |        -1.1388489 |        79.77719 |
+| Romance       |         0.7689464 |        69.54708 |
+| Sci-Fi        |         0.7913786 |        69.68587 |
+
+Overall sentiment & rating of film genres
+
+``` r
+plot_sentiment_rating <- sentiment_v_rating %>% 
+  ggplot(aes(x = avg_net_sentiment, y = avg_user_rating)) +
+  geom_point() +
+  labs(
+    x = "Average Sentiment",
+    y = "Average User Rating",
+    title = "Average Sentiment vs Average Rating by Genre"
+  ) +
+  theme_minimal()+
+  theme(plot.title = element_text(size = 10))
+
+plot_remove_outlier <- sentiment_v_rating %>% 
+  slice(-6) %>% 
+  ggplot(aes(x = avg_net_sentiment, y = avg_user_rating)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE)+
+  labs(
+    x = "Average Sentiment",
+    y = "",
+    title = "Average Sentiment vs Average Rating by Genre (removing outliers)"
+  ) +
+  theme_minimal()+
+  theme(plot.title = element_text(size = 7))
+
+plot_sentiment_rating + plot_remove_outlier
+```
+
+    `geom_smooth()` using formula = 'y ~ x'
+
+![](coursework_01_files/figure-commonmark/task-8-code-1.png)
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 

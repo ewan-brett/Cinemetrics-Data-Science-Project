@@ -19,6 +19,7 @@ Please read the `coursework_01_instructions.pdf` for the full context, data dict
 library(tidyverse)
 library(tidytext)
 library(knitr)
+library(patchwork)
 ```
 
 ## Part A: Data Wrangling & EDA 
@@ -305,10 +306,11 @@ avg_engagement <- cinemetrics %>%
     avg_engagement = mean(engagement_score, na.rm = TRUE),
     .groups = "drop"
   ) %>% 
-  arrange(desc(avg_engagement)) 
+  arrange(age_tier) 
 
 avg_engagement %>% 
-  kable(caption = "Average Engagement by Age Tier and Subscription Type")
+  pivot_wider(names_from = subscription_type, values_from = avg_engagement) %>% 
+  kable(caption = "Average Engagement")
 
 ```
 
@@ -349,7 +351,11 @@ age_subtype_count %>%
 #| label: task-7-code
 # Write your Task 7 code here:
 
-words <- cinemetrics %>%
+# create an artificial review id category so that we can distinguish between reviews
+cinemetrics <- cinemetrics %>%
+  mutate(review_id = row_number())
+
+words <- cinemetrics %>% 
   unnest_tokens(word, review_snippet) %>% 
   anti_join(stop_words, join_by(word))
 
@@ -379,7 +385,55 @@ top_10_words %>%
 #| label: task-8-code
 # Write your Task 8 code here:
 
+bing_lexicon <- get_sentiments("bing")
 
+review_sentiment <- words %>% 
+  inner_join(bing_lexicon, by = "word") 
+
+sentiment_count <- review_sentiment %>% 
+    count(review_id, sentiment) %>% 
+    pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+    mutate(net_sentiment = positive - negative)
+
+head(sentiment_count,50)
+
+cinemetrics <- cinemetrics %>% 
+  left_join(sentiment_count, join_by(review_id))
+
+sentiment_v_rating <- cinemetrics %>% 
+  group_by(primary_genre) %>% 
+  summarise(
+    avg_net_sentiment = mean(net_sentiment, na.rm = TRUE),
+    avg_user_rating = mean(user_rating_100, na.rm = TRUE))
+
+sentiment_v_rating %>% 
+  kable(caption = "Overall sentiment & rating of film genres")
+
+plot_sentiment_rating <- sentiment_v_rating %>% 
+  ggplot(aes(x = avg_net_sentiment, y = avg_user_rating)) +
+  geom_point() +
+  labs(
+    x = "Average Sentiment",
+    y = "Average User Rating",
+    title = "Average Sentiment vs Average Rating by Genre"
+  ) +
+  theme_minimal()+
+  theme(plot.title = element_text(size = 10))
+
+plot_remove_outlier <- sentiment_v_rating %>% 
+  slice(-6) %>% 
+  ggplot(aes(x = avg_net_sentiment, y = avg_user_rating)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE)+
+  labs(
+    x = "Average Sentiment",
+    y = "",
+    title = "Average Sentiment vs Average Rating by Genre (removing outliers)"
+  ) +
+  theme_minimal()+
+  theme(plot.title = element_text(size = 7))
+
+plot_sentiment_rating + plot_remove_outlier
 ```
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
