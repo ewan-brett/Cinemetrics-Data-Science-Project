@@ -813,16 +813,71 @@ top_tf_idf_by_genre <- genre_tf_idf %>%
   group_by(primary_genre) %>% 
   slice_max(order_by = tf_idf,n = 1) %>% 
   arrange(primary_genre, desc(tf_idf))
+
+
+# following code written for the written interpretation
+
+# 1
+genre_tf_idf %>% 
+  filter(primary_genre == "Romance", word == "film") %>% 
+  select(-n)
 ```
+
+    # A tibble: 1 × 5
+      primary_genre word     tf   idf tf_idf
+      <fct>         <chr> <dbl> <dbl>  <dbl>
+    1 Romance       film  0.108     0      0
+
+``` r
+# 3
+genre_tf_idf %>% 
+  filter(primary_genre == "Romance") %>% 
+  arrange(desc(tf_idf)) %>% 
+  slice_head(n=3)
+```
+
+    # A tibble: 3 × 6
+      primary_genre word        n     tf   idf  tf_idf
+      <fct>         <chr>   <int>  <dbl> <dbl>   <dbl>
+    1 Romance       watch     680 0.105  0.134 0.0141 
+    2 Romance       average   359 0.0556 0.134 0.00743
+    3 Romance       fairly    359 0.0556 0.134 0.00743
+
+``` r
+genre_tf_idf %>% 
+  filter(primary_genre == "Romance") %>% 
+  arrange(desc(n)) %>% 
+  slice_head(n=3)
+```
+
+    # A tibble: 3 × 6
+      primary_genre word        n     tf   idf  tf_idf
+      <fct>         <chr>   <int>  <dbl> <dbl>   <dbl>
+    1 Romance       film      697 0.108  0     0      
+    2 Romance       watch     680 0.105  0.134 0.0141 
+    3 Romance       average   359 0.0556 0.134 0.00743
 
 <!--- WRITE YOUR WRITTEN ANSWER BELOW THIS LINE --->
 
 #### Written Interpretation
 
-1.  *Replace this text with the TF-IDF score for the word “film”.*
-2.  *Replace this text with your mathematical explanation using the IDF
-    equation from the lecture.*
-3.  *Replace this text with your comparison of TF-IDF vs frequency.*
+1.  0
+2.  *TF-IDF is calculated by multiplying the term frequency in a
+    specific genre by log(number of genres/number of genres the term
+    appears in). The term “film” appears in reviews for every genre, so
+    the IDF becomes log(8/8)=0, and hence a TF-IDF score of 0. This
+    makes sense because IDF weights terms by how unique they are across
+    genres, and “film” is not unique to any specific genre.*
+3.  *The most frequent words in Romance are “film” (697), “watch” (680),
+    “average” (359). These are generic words that don’t tell us much
+    about Romance as a genre specifically. The top 3 highest TF-IDF
+    words are “watch” (0.014), “average” (0.007), “fairly” (0.007). In
+    this scenario, due only having 8 genres, and the language used
+    across reviews for any film is quite similar, the IDF component does
+    not distinguish terms as effectively. It does help a little bit
+    though, by removing “film” which is the most generic term. Instead
+    we see “fairly” which does give us a little bit more insight into
+    the general strength of opinions about Romance films.*
 
 ### Task 10: Executive Recommendation
 
@@ -840,4 +895,4 @@ and acknowledging one limitation.*
 
 <!--- WORD COUNT ANCHOR --->
 
-    **Prose Word Count:** 1196 words
+    **Prose Word Count:** 1337 words
