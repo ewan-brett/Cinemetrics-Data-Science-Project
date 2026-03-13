@@ -103,9 +103,8 @@ dim(cinemetrics_messy)[1]
 #### Written Interpretation
 
 *Removing duplicates in history was necessary because otherwise
-duplicate rows would remain after the join, which would skew the
-analysis of the variables: without cleaning the data first results in a
-dataset with 22558 rows, whereas with cleaned data we have 19965 rows.*
+duplicate rows would remain after the join which would skew the analysis
+of the variables: the cleaned dataset has 2593 less rows after join.*
 
 ### Task 2: Missing Values Handling
 
@@ -157,17 +156,15 @@ cinemetrics$user_rating_100 %>%
 
 #### Written Interpretation
 
-*summary() gives a general overview of the data, but may properly
-account for missing values especially if they are a str or factor. We
-cannot be sure how it treats missing values and calculates statistics
-like the median. Therefore it is better to use is.na() to
-programmatically calculate missing values in our data; this shows us
-that there are 985 for user_rating_100. We then have freedom over how
-these are handled, and can decide whther to remove them or assign a
-specific value depending on context of the data. For example the median
-after removing the missing values of user_rating_100 is 71, however if
-we knew that users don’t bother rating films they didn’t like we could
-assign missing values as 0, giving us a median of 70. *
+*summary() gives a general overview of the data, but may not properly
+account for missing values if they are strings. It’s better to use
+is.na() to calculate missing values in our data; this shows us there are
+985 for user_rating_100. We then choose how these are handled, and
+decide whether to remove them or assign a specific value depending on
+context. For example the median after removing the missing values of
+user_rating_100 is 71, however if we knew that users don’t bother rating
+films they didn’t like we could assign missing values as 0, giving us a
+median of 70. *
 
 ### Task 3: Genre Grouping
 
@@ -282,22 +279,22 @@ Romance vs Rom-Com
 
 #### Written Interpretation
 
-When “romantic comedy” movies are collapsed into the “Romance” category,
-the differences in ratings are lost. The “Romance” tag contains 991
-movies with an average rating of 69.83, while the “romantic comedy”
-category is much smaller with only 145 movies and a significantly lower
-average rating of 66.35. When these categories are grouped together, the
-large number of higher-rated “Romance” films dominates the average. As a
-result, the poorer performance of romantic comedies is masked, creating
-a statistical distortion as the combined category appears to perform
-better than the “romantic comedy” films actually do.
+*When “romantic comedy” movies are collapsed into the “Romance”
+category, differences in ratings are lost. The “Romance” tag contains
+991 movies with an average rating of 69.83, while “romantic comedy”
+category is smaller with only 145 movies and a lower rating of 66.35.
+When these categories are grouped, the large number of higher-rated
+“Romance” films dominates the average. As a result, the poorer
+performance of romantic comedies is masked, creating a distortion as the
+combined category performs better than the “romantic comedy” films
+actually do. *
 
-Here, I have decided to group Romantic comedy and Romance together, as
+*Here, I have decided to group Romantic comedy and Romance together, as
 romantic comedy is a sub-genre of Romance. Due to both categories having
 roughly 1500 datapoints, not grouping them together will lead to one of
 them having to be put into “Other”. This would make the other category
 quite large, and would be primarily made up of one genre which would not
-make sense and lose us data that we could otherwise make inferences on.
+make sense and lose us data that we could otherwise make inferences on.*
 
 ### Task 4: Genre Ratings Table
 
@@ -369,22 +366,20 @@ Budget (USD) vs Average rating for Action subcategories
 
 #### Written Interpretation
 
-From our data, there is evidence that larger budget does not necessarily
-mean higher average rating. Our results show the highest average rating
-was “Horror” with 79.78, however the average budget for these movies was
-only approximately \$10.2m. We can see that on the other hand, “Sci-Fi”
-and “Action” both had budgets of over \$100m, but despite this they both
-had average ratings of roughly 69. This shows that larger budget does
-not necessarily mean users preferred the movies.
+*There is evidence that larger budget does not mean higher average
+rating. Our results show the highest average rating was “Horror” with
+79.78, however the average budget was only approximately \$10.2m. On the
+other hand, “Sci-Fi” and “Action” had budgets of over \$100m, despite
+this they had average ratings of roughly 69. Hence larger budget does
+not necessarily mean users preferred the movies. *
 
-“Action” is a very broad category and may hide information about
-differences in sub-genres. As there are many different smaller
-subcategories of action films, by collapsing them into one large
-category we lose the ability to compare performances of these, and the
-well-performing ones will be balanced out by the poorly performing ones.
-In the case of this data, we have only collapsed two sub-genres to make
-“action” and both of them have ratings differing by only 0.23. Hence our
-grouping isn’t drastically masking the performance of any sub-genres.
+*“Action” is a broad category and may hide information about differences
+in sub-genres. By collapsing many sub-genres into one large category we
+lose the ability to compare their performances: well-performing ones get
+balanced out by poorly performing ones. Here we only collapsed two
+genres to make “action” and they have ratings differing by only 0.23,
+hence our grouping isn’t drastically masking the performance of any
+sub-genres.*
 
 ### Task 5: Ratings and Engagement Scores
 
@@ -885,4 +880,4 @@ context of movies.*
 
 <!--- WORD COUNT ANCHOR --->
 
-    **Prose Word Count:** 1284 words
+    **Prose Word Count:** 1197 words
