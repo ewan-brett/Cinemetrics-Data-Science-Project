@@ -247,7 +247,7 @@ most_watched_movies %>%
 
 #### Written Interpretation
 
-*UP was the movie with the lowest outlier in ratings, at roughly 20/100, meaning one user gave it a very bad rating. However for judging overall audience opinion, we can discount this and look at the IQR. This is relatively small compared to the others in top 10, hence there was less variability in opinions and greater consensus among viewers' ratings.*
+*UP has the lowest outlier in ratings, roughly 20/100, meaning one user gave it a very bad rating. However for overall audience opinion, we discount this and look at the IQR, which is relatively small compared to the others in top 10, hence greater consensus among user ratings.*
 
 ```{r}
 #| label: task-5-verification
@@ -261,7 +261,7 @@ most_watched_movies %>%
 
 #### Empirical Verification
 
-*This supports my interpretation, as Up has the second lowest IQR of 19.0, meaning there was less variation in opinions. Inside out is the film with least consensus in opinions with IQR of 22.5, and dune has the greatest consensus in opinions with IQR of 18.0.*
+*This supports my interpretation: Up has the second lowest IQR of 19.0, so less variation in opinions. Inside out is the film with least consensus with IQR of 22.5, and dune has the greatest consensus with IQR of 18.0.*
 
 
 ### Task 6: Engagement Score and Subscription Type
@@ -329,7 +329,7 @@ age_subtype_count %>%
 
 #### Written Interpretation
 
-*Our 2D analysis shows that engagement score for premium users (56.5) is higher than that of basic users (44.0). However in our analysis split by age category, basic users have higher engagement than premium for all age categories. This is an example of "Simpson's Paradox": the change in observed trend is due to the differences in group sizes and distribution of users. For instance, in this scenario premium users are more highly concentrated in higher age categories (as seen in verification), where engagement levels are higher generally, hence the average engagement is weighted towards premium. On the other end, 91.0% of users 25 or younger have basic subscription, but the engagement in age tier 1 is significantly lower in general (28.9 for basic and 12.6 for premium) hence engagement for basic users is a lot lower, despite being higher in every individual age tier.*
+*Our 2D analysis shows that engagement score for premium users (56.5) is higher than that of basic users (44.0). However splitting our analysis by age category, basic users have higher engagement than premium for all age categories. This is an example of "Simpson's Paradox": the change in observed trend is due to the differences in group sizes and distribution of users. For instance, premium users are more concentrated in higher age categories (as seen in verification), where engagement levels are higher, hence the average engagement is weighted towards premium. On the other end, 91.0% of users 25 or younger have basic subscription, but the engagement in age tier 1 is significantly lower in general (28.9 for basic and 12.6 for premium) hence engagement for basic users is a lot lower, despite being higher in every individual age tier.*
 
 
 ---
@@ -450,7 +450,7 @@ genre_tf_idf <- genre_words  %>%
 
 top_tf_idf_by_genre <- genre_tf_idf %>% 
   group_by(primary_genre) %>% 
-  slice_max(order_by = tf_idf,n = 1) %>% 
+  slice_max(order_by = tf_idf,n = 1) %>%  # genAI was used to get the slice_max() function and understand it
   arrange(primary_genre, desc(tf_idf))
 
 
@@ -479,7 +479,7 @@ genre_tf_idf %>%
 
 1. 0
 2. *TF-IDF is calculated by multiplying the term frequency in a specific genre by log(number of genres/number of genres the term appears in). The term “film” appears in reviews for every genre, so the IDF becomes log(8/8)=0, and hence a TF-IDF score of 0. This makes sense because IDF weights terms by how unique they are across genres, and “film” is not unique to any specific genre.*
-3. *The most frequent words in Romance are "film" (697), "watch" (680), "average" (359). These are generic words that don't tell us much about Romance as a genre specifically. The top 3 highest TF-IDF words are "watch" (0.014), "average" (0.007), "fairly" (0.007). In this scenario, due only having 8 genres, and the language used across reviews for any film is quite similar, the IDF component does not distinguish terms as effectively. It does help a little bit though, by removing "film" which is the most generic term. Instead we see "fairly" which does give us a little bit more insight into the general strength of opinions about Romance films.*
+3. *The most frequent words in Romance are "film" (697), "watch" (680), "average" (359). These are generic words that don't tell us about Romance genre specifically. The 3 highest TF-IDF words are "watch" (0.014), "average" (0.007), "fairly" (0.007). In this scenario, due only having 8 genres, and the language used across reviews for any film is quite similar, the IDF component does not distinguish terms as effectively. It does help slightly though, by removing "film", the most generic term. Instead we see "fairly" which does give us more insight into the general strength of opinions about Romance films.*
 
 
 
@@ -490,7 +490,7 @@ genre_tf_idf %>%
 
 #### Written Interpretation
 
-*Replace this text with your one-paragraph executive recommendation (max 150 words), citing at least three specific findings from earlier tasks and acknowledging one limitation.*
+*I would suggest that CineMetrics should focus on promoting content specific to users. For example, engagement for users 25 or younger was 28.94 (basic) and 12.67 (premium), suggesting CineMetrics needs to focus on promoting more interesting content to younger age groups. It could be useful to include a wider variety of genres that appeal to children more, as right now the best performing films in terms of rating is Horror with 79.8, however this is not suitable for children. Further, Inside out has a rating IQR of 22.5 meaning opinion was quite varied. This could be because it is a childrens' film which has been wrongly recommended to adults, hence tailoring recommendations will reduce variation in opinions. One limitation is the TF-IDF sentiment has wrongly interpreted the opinion of horror movie reviews. To better categorise this we should use an adapted version of bing to fit the context of movies.*
 
 
 ---
