@@ -1,4 +1,5 @@
 The main contents of this file:
 -coursework_01.qmd is the main coursework file.
+-coursework_01.md is the rendered markdown file.
 -coursework_01.Rproj is the RStudio project file.
 -data/ contains the coursework datasets.
